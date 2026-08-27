@@ -6,7 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.config import get_settings
 from app.database import create_tables
+
 from app.routes import router as receipts_router
 from app.analytics_routes import router as analytics_router
 from app.product_routes import router as products_router
@@ -25,13 +27,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+settings = get_settings()
+cors_origins = settings.cors_origin_list
+if cors_origins:
+    # Only enable cross-origin browser access when explicitly configured.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(receipts_router)
 app.include_router(analytics_router)

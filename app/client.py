@@ -51,7 +51,12 @@ class AHClient:
             "refresh_token": self._refresh_token,
             "expiry": self._token_expiry,
         }
-        TOKEN_FILE.write_text(json.dumps(data))
+        # Create with owner-only permissions from the start: this file holds
+        # the live AH refresh token, so it must never be group/world-readable.
+        TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(TOKEN_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(data))
 
     def _get_auth_headers(self) -> dict:
         headers = self.headers.copy()
